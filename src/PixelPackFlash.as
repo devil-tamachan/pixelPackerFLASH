@@ -14,6 +14,7 @@
 	import MyMultiMap;
 	import algoGuillotine;
 	import algoMaxRects;
+	import algoShelfSimple;
 
 
 	public class PixelPackFlash extends MovieClip
@@ -181,7 +182,7 @@ private var fileRefL:FileReferenceList = new FileReferenceList();
 			var boxes:MyMultiMap;
 			
 //			var fine:bool = 0;
-		/*	listFiles.addItem({label:"images start"});
+			/*listFiles.addItem({label:"images start"});
 				for(var k:uint=0; k<images.length; k++)
 				{
 					listFiles.addItem({label:"  "+images[k].toString()});
@@ -196,6 +197,14 @@ private var fileRefL:FileReferenceList = new FileReferenceList();
 					{
 						size.y = nextHigh;
 						boxes = algoMaxRects.pack(images, size);
+					}
+					break;
+				case 2:
+					boxes = algoShelfSimple.pack(images, size);
+					if(boxes==null)
+					{
+						size.y = nextHigh;
+						boxes = algoShelfSimple.pack(images, size);
 					}
 					break;
 				case 3:
