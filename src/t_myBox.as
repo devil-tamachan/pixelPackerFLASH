@@ -15,7 +15,7 @@
       m_pos = new t_myVector2(x, y);
       m_size = new t_myVector2(w, h);
     }
-    public function t_myBoxFromVec2(pos:t_myVector2, size:t_myVector2)
+    public static function t_myBoxFromVec2(pos:t_myVector2, size:t_myVector2)
     {
       return new t_myBox(pos.x, pos.y, size.x, size.y);
     }

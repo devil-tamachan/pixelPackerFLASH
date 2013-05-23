@@ -13,6 +13,7 @@
 	import JSON;
 	import MyMultiMap;
 	import algoGuillotine;
+	import algoMaxRects;
 
 
 	public class PixelPackFlash extends MovieClip
@@ -27,6 +28,7 @@
 		public var btnAddFiles:Button;
 		public var btnRemoveFiles:Button;
 		public var listFiles:List;
+		public var radioAlgo:RadioButtonGroup;
 
 private var fileRefL:FileReferenceList = new FileReferenceList();
 
@@ -40,6 +42,8 @@ private var fileRefL:FileReferenceList = new FileReferenceList();
 			btnProcess.addEventListener(MouseEvent.CLICK, onProcess);
 			btnAddFiles.addEventListener(MouseEvent.CLICK, onAddFiles);
 			//btnRemoveFiles.addEventListener(MouseEvent.CLICK, onRemoveFiles);
+			
+			radioAlgo = RadioButtonGroup.getGroup("radioAlgo");
 		}
 		
 		public function btnsEnabled(b:Boolean)
@@ -184,15 +188,28 @@ private var fileRefL:FileReferenceList = new FileReferenceList();
 				}
 			listFiles.addItem({label:"images end"});*/
 			
-			boxes = algoGuillotine.pack(images, size);
-			
-			if(boxes==null)
+			switch(int(radioAlgo.selectedData.valueOf()))
 			{
-				size.y = nextHigh;
-				boxes = algoGuillotine.pack(images, size);
+				case 1:
+					boxes = algoMaxRects.pack(images, size);
+					if(boxes==null)
+					{
+						size.y = nextHigh;
+						boxes = algoMaxRects.pack(images, size);
+					}
+					break;
+				case 3:
+					boxes = algoGuillotine.pack(images, size);
+					if(boxes==null)
+					{
+						size.y = nextHigh;
+						boxes = algoGuillotine.pack(images, size);
+					}
+					break;
 			}
+			if(!boxes)throw new Error("Algo Error");
 			
-		/*	listFiles.addItem({label:"boxes start"});
+			/*listFiles.addItem({label:"boxes start"});
 			for(var s:String in boxes.m_key)
 			{
 				listFiles.addItem({label:s});

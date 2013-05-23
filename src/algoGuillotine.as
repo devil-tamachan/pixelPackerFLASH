@@ -4,21 +4,14 @@ package
   import t_myVector2;
   import t_myBox;
   import flash.utils.ByteArray;
-
-	import fl.controls.*;
+  import fl.controls.*;
+  
   public class algoGuillotine
   {
     public function algoGuillotine()
     {
     }
 
-    /*public static function clone(source:Object):*
-    {
-      var myBA:ByteArray = new ByteArray();
-      myBA.writeObject(source);
-      myBA.position=0;
-      return(myBA.readObject());
-    }*/
     public static function myClone(src:Vector.<t_myVector2>):Vector.<t_myVector2>
     {
       var retVec:Vector.<t_myVector2> = new Vector.<t_myVector2>();
@@ -34,32 +27,25 @@ package
       var freeBoxes:Vector.<t_myBox> = new Vector.<t_myBox>;
       freeBoxes.push(new t_myBox(0,0,size.x,size.y));
 
-      //var rects:Vector.<t_myVector2> = clone(temp) as Vector.<t_myVector2>; ERR: rects.length == null!!!
       var rects:Vector.<t_myVector2> = myClone(temp);
 
       var boxes:MyMultiMap = new MyMultiMap();
 
       var minRects:t_myVector2;
-      var minRectsIndex = -1;
       var minFreeBoxes:t_myBox;
-      var minFreeBoxesIndex = -1;
 
       while (rects.length > 0)
       {
-	var i:uint, j:uint;
-	var v:t_myVector2;
-	var box:t_myBox;
-	var distance:int;
-	minRectsIndex = -1;
-	minFreeBoxesIndex = -1;
+	var minRectsIndex:int = -1;
+	var minFreeBoxesIndex:int = -1;
         var min:int = Math.max(size.x, size.y);
-        for (i = 0; i<rects.length; i++)
+        for (var i:uint = 0; i<rects.length; i++)
         {
-          v = rects[i];
-          for (j=0; j<freeBoxes.length; j++)
+          var v:t_myVector2 = rects[i];
+          for (var j:uint=0; j<freeBoxes.length; j++)
           {
-            box = freeBoxes[j];
-            distance = Math.min(box.m_size.y - v.y, box.m_size.x - v.x);
+            var box:t_myBox = freeBoxes[j];
+            var distance:int = Math.min(box.m_size.y - v.y, box.m_size.x - v.x);
             if (distance < 0) continue;
             if (distance < min)
             {

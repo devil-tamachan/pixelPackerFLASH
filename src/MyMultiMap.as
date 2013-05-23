@@ -20,7 +20,7 @@ package
         m_key[key] = new Vector.<t_myVector2>();
       }
       m_key[key].push(val.clone());
-      length = length +1;
+      length++;
     }
 
     public function getAndDelete(key:String):t_myVector2
