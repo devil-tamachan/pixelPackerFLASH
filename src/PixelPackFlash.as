@@ -25,6 +25,7 @@
 		private var queueImages:Vector.<FileReference> = new Vector.<FileReference>;
 		private var queueByteArray:Vector.<ByteArray> = new Vector.<ByteArray>;
 		
+		public var chkJSONIndent:CheckBox;
 		public var btnProcess:Button;
 		public var btnAddFiles:Button;
 		public var btnRemoveFiles:Button;
@@ -161,18 +162,40 @@ private var fileRefL:FileReferenceList = new FileReferenceList();
 			newBmp.copyPixels(srcBmp, r, new Point(0,0));
 			return newBmp;
 		}
+		
+		public function calcWH(boxes:MyMultiMap):t_myVector2
+		{
+			var wh:t_myVector2 = new t_myVector2(0,0);
+			for(var s:String in boxes.m_key)
+			{
+				var v:Vector.<t_myVector2> = boxes.m_key[s];
+				for(var j:uint=0; j<v.length; j++)
+				{
+					var imgPos:t_myVector2 = v[j];
+					var result:Array = s.split(",");
+					var imgWH:t_myVector2 = new t_myVector2(Number(result[0]),Number(result[1]));
+					wh.x = Math.max(wh.x, imgPos.x + imgWH.x);
+					wh.y = Math.max(wh.y, imgPos.y + imgWH.y);
+				}
+			}
+			
+			return wh;
+		}
 
 		public function startPacking():void
 		{
 			if(queueImages.length || queueByteArray.length)return;
 			var areaSum:int = 0;
 			var images:Vector.<t_myVector2> = new Vector.<t_myVector2>();
+			var retryWH:t_myVector2 = new t_myVector2(0, 0);
 			for (var i:uint=0; i<imageVec.length; i++)
 			{
 				var w:int = imageVec[i].width+1;
 				var h:int = imageVec[i].height+1;
 				images.push(new t_myVector2(w, h));
 				areaSum += w * h;
+				retryWH.x += w;
+				retryWH.y += h;
 			}
 			
 			var side:int = Math.sqrt(areaSum);
@@ -191,11 +214,63 @@ private var fileRefL:FileReferenceList = new FileReferenceList();
 			
 			switch(int(radioAlgo.selectedData.valueOf()))
 			{
+				case 0:
+					var boxes2:MyMultiMap;
+					var currentWH:t_myVector2, minWH:t_myVector2 = new t_myVector2(int.MAX_VALUE, int.MAX_VALUE);
+					boxes2 = algoMaxRects.pack(images, size);
+					if(boxes2==null)
+					{
+						size = retryWH;//size.y = nextHigh;
+						boxes2 = algoMaxRects.pack(images, size);
+					}
+					if(boxes2)
+					{
+						currentWH = calcWH(boxes2);
+						if(minWH.isBiggerThanArg(currentWH)) 
+						{
+							//listFiles.addItem({label:"maxRects!!!"});
+							minWH = currentWH;
+							boxes = boxes2;
+						}
+					}
+					boxes2 = algoShelfSimple.pack(images, size);
+					if(boxes2==null)
+					{
+						size = retryWH;//size.y = nextHigh;
+						boxes2 = algoShelfSimple.pack(images, size);
+					}
+					if(boxes2)
+					{
+						currentWH = calcWH(boxes2);
+						if(minWH.isBiggerThanArg(currentWH)) 
+						{
+							//listFiles.addItem({label:"algoShelfSimple!!!"});
+							minWH = currentWH;
+							boxes = boxes2;
+						}
+					}
+					boxes2 = algoGuillotine.pack(images, size);
+					if(boxes2==null)
+					{
+						size = retryWH;//size.y = nextHigh;
+						boxes2 = algoGuillotine.pack(images, size);
+					}
+					if(boxes2)
+					{
+						currentWH = calcWH(boxes2);
+						if(minWH.isBiggerThanArg(currentWH)) 
+						{
+							//listFiles.addItem({label:"algoGuillotine!!!"});
+							minWH = currentWH;
+							boxes = boxes2;
+						}
+					}
+					break;
 				case 1:
 					boxes = algoMaxRects.pack(images, size);
 					if(boxes==null)
 					{
-						size.y = nextHigh;
+						size = retryWH;//size.y = nextHigh;
 						boxes = algoMaxRects.pack(images, size);
 					}
 					break;
@@ -203,7 +278,7 @@ private var fileRefL:FileReferenceList = new FileReferenceList();
 					boxes = algoShelfSimple.pack(images, size);
 					if(boxes==null)
 					{
-						size.y = nextHigh;
+						size = retryWH;//size.y = nextHigh;
 						boxes = algoShelfSimple.pack(images, size);
 					}
 					break;
@@ -211,12 +286,15 @@ private var fileRefL:FileReferenceList = new FileReferenceList();
 					boxes = algoGuillotine.pack(images, size);
 					if(boxes==null)
 					{
-						size.y = nextHigh;
+						size = retryWH;//size.y = nextHigh;
 						boxes = algoGuillotine.pack(images, size);
 					}
 					break;
 			}
-			if(!boxes)throw new Error("Algo Error");
+			if(!boxes)throw new Error("boxes==null: side:"+side+", nextHigh:"+nextHigh+", nextNear:"+nextNear);
+			
+			var wh:t_myVector2 = calcWH(boxes);
+			//throw new Error("wh: "+wh.toString());
 			
 			/*listFiles.addItem({label:"boxes start"});
 			for(var s:String in boxes.m_key)
@@ -230,7 +308,7 @@ private var fileRefL:FileReferenceList = new FileReferenceList();
 			}
 			listFiles.addItem({label:"boxes end"});*/
 			
-			var bmpSheet:BitmapData = new BitmapData(size.x, size.y, true, 0/*Transparent*/);
+			var bmpSheet:BitmapData = new BitmapData(wh.x, wh.y, true, 0/*Transparent*/);
 			
 			var rootNode:Object = {sizex:bmpSheet.width, sizey:bmpSheet.height};
 			
@@ -244,7 +322,7 @@ private var fileRefL:FileReferenceList = new FileReferenceList();
 				var imgNode:Object = {x:pos.x, y:pos.y, sizex:imageVec[i].width, sizey:imageVec[i].height};
 				rootNode["image"+i] = imgNode;
 			}
-			bmpSheet = trim(bmpSheet);
+			//bmpSheet = trim(bmpSheet);
 			
 			var pngFile:FileReference = new FileReference();
 			pngFile.addEventListener(Event.COMPLETE, onCompletePNGSave);
@@ -270,7 +348,7 @@ private var fileRefL:FileReferenceList = new FileReferenceList();
 			fileref.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, onSaveSecError);
 			
 			var jsonFile:FileReference = new FileReference();
-			jsonFile.save(JSON.stringify(jsonRootNode), "sheet.json");
+			jsonFile.save(JSON.stringify(jsonRootNode, null, chkJSONIndent.selected?2:null), "sheet.json");
 		}
 		public function onCancelPNGSave(e:Event):void
 		{
